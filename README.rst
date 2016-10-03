@@ -76,12 +76,26 @@ Edit keystone section in `/etc/kuryr/kuryr.conf`, replace ADMIN_PASSWORD:
     admin_password = ADMIN_PASSWORD
 
 
-In the same file uncomment the `bindir` parameter with the path for the Kuryr vif binding
-executables:
+In the same file uncomment the `bindir` parameter with the path for the Kuryr
+vif binding executables:
 
 ::
 
     bindir = /usr/local/libexec/kuryr
+
+By default, Kuryr will use veth pairs for performing the binding. However, the
+Kuryr library ships with two other drivers that you can configure in the
+**binding** section::
+
+    [binding]
+    #driver = kuryr.lib.binding.drivers.ipvlan
+    #driver = kuryr.lib.binding.drivers.macvlan
+
+Drivers may make use of other **binding** options. Both Kuryr library drivers in
+the previous snippet can be further configured setting the interface that will
+act as link interface for the virtual devices::
+
+    link_iface = enp4s0
 
 
 Running Kuryr
@@ -165,33 +179,3 @@ website.
 
     $ cd build/html
     $ python -m SimpleHTTPServer 8080
-
-Limitations
------------
-
-To create Docker networks with subnets having same/overlapping cidr, it is
-expected to pass unique pool name for each such network creation Docker
-command. Docker cli options -o and --ipam-opt should be used to pass pool
-names as shown below:
-
-::
-
-    $ sudo docker network create --driver=kuryr --ipam-driver=kuryr \
-      --subnet 10.0.0.0/16 --ip-range 10.0.0.0/24 \
-      -o neutron.pool.name=neutron_pool1 \
-      --ipam-opt=neutron.pool.name=neutron_pool1 \
-      foo
-      eddb51ebca09339cb17aaec05e48ffe60659ced6f3fc41b020b0eb506d364
-
-Now Docker user creates another network with same cidr as the previous one,
-i.e 10.0.0.0/16, but with different pool name, neutron_pool2:
-
-::
-
-    $ sudo docker network create --driver=kuryr --ipam-driver=kuryr \
-      --subnet 10.0.0.0/16 --ip-range 10.0.0.0/24 \
-      -o neutron.pool.name=neutron_pool2 \
-      --ipam-opt=neutron.pool.name=neutron_pool2 \
-      bar
-      397badb51ebca09339cb17aaec05e48ffe60659ced6f3fc41b020b0eb506d786
-
